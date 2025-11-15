@@ -1,42 +1,57 @@
 /**
  * translator.js
  *
- * Implementa a tradução automática para Português no carregamento da página.
- * O código define o cookie de tradução e recarrega a página UMA ÚNICA VEZ
- * para ativar a tradução automática do Google, evitando o loop de piscadas.
+ * Implementa a tradução automática de forma inteligente:
+ * 1. Só traduz se o idioma do navegador NÃO for Português.
+ * 2. Só recarrega a página UMA ÚNICA VEZ para evitar bugs e loops.
  */
 
-// 1. Função de Callback exigida pela API do Google Translate
-// Esta função configura o widget, mas ele fica invisível.
+// Idioma nativo do seu site (clone da BBC)
+const PAGE_LANGUAGE = 'en'; 
+// Idioma alvo que queremos forçar
+const TARGET_LANGUAGE = 'pt'; 
+
+// 1. Função de Callback do Google Translate (Mantida)
 function googleTranslateElementInit() {
     new google.translate.TranslateElement(
         {
-            // Idioma original do seu clone da BBC (Inglês)
-            pageLanguage: 'en', 
-            // Opcional: Layout simples para o widget
+            pageLanguage: PAGE_LANGUAGE,
             layout: google.translate.TranslateElement.InlineLayout.SIMPLE 
         },
-        // ID do elemento onde o widget será inserido
         'google_translate_element'
     );
 }
 
-// 2. Função para traduzir automaticamente no carregamento
-function forceTranslateToPortuguese() {
-    // Verifica se o cookie de tradução para Português (/en/pt) JÁ existe no navegador.
-    if (document.cookie.indexOf('googtrans=/en/pt') === -1) {
+// 2. Função principal que gerencia a tradução
+function forceTranslateIntelligently() {
+    
+    // a. Obtém o idioma preferido do navegador do usuário
+    // Usa 'pt' como fallback seguro se o idioma não for detectado
+    const userLang = (navigator.language || navigator.userLanguage || TARGET_LANGUAGE).substring(0, 2);
+    
+    // b. Verifica o cookie de tradução para ver se a página JÁ foi traduzida
+    const translationCookie = document.cookie.indexOf(`googtrans=/${PAGE_LANGUAGE}/${TARGET_LANGUAGE}`) !== -1;
+
+    // c. Lógica de tradução:
+    // A tradução só será forçada se o idioma do navegador for o idioma NATIVO do site (Inglês)
+    // OU se o idioma preferido do usuário for Português, mas o site ainda não foi traduzido.
+    
+    if (userLang === PAGE_LANGUAGE || (userLang === TARGET_LANGUAGE && !translationCookie)) {
         
-        // Se a página ainda não está em português (primeira visita ou cookies limpos):
-        
-        // Define o cookie para forçar o Google Translate a traduzir de Inglês (en) para Português (pt).
-        document.cookie = 'googtrans=/en/pt; path=/; domain=' + location.host;
-        
-        // Recarrega a página. O widget lê o cookie e traduz imediatamente na próxima carga.
-        window.location.reload();
-        
+        // Verifica se o site ainda não foi traduzido para o Português
+        if (!translationCookie) {
+            
+            // Define o cookie e recarrega a página
+            document.cookie = `googtrans=/${PAGE_LANGUAGE}/${TARGET_LANGUAGE}; path=/; domain=${location.host}`;
+            window.location.reload();
+            
+        }
+    } else {
+        // Se o usuário não está em Inglês e não está em Português, 
+        // ou se o site já foi traduzido, o código não faz nada.
+        // O site permanece no idioma original (Inglês) até o usuário usar o seletor.
     }
-    // Se o cookie JÁ existe, o código não faz nada, evitando o loop e o bug de piscada.
 }
 
-// 3. Executa a função de tradução logo após o carregamento total da janela.
-window.onload = forceTranslateToPortuguese;
+// 3. Executa a função após o carregamento total da janela
+window.onload = forceTranslateIntelligently;
