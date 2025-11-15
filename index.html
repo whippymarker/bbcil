@@ -536,6 +536,47 @@ data-styled.g666[id="sc-92527ac1-2"]{content:"bXmvnC,"}/*!sc*/
     function googleTranslateElementInit() {
         new google.translate.TranslateElement(
             {
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: true
+            },
+            'google_translate_element' // ID do seu contêiner de tradutor
+        );
+    }
+
+    // Função para forçar a tradução para o Português (pt) com atraso
+    function translateImmediately() {
+        // Verifica se a tradução já foi definida (via cookie)
+        if (document.cookie.indexOf('googtrans=/en/pt') === -1) {
+            
+            // Simula o clique no seletor para traduzir para PT
+            var selectElement = document.querySelector('.goog-te-combo');
+            if (selectElement) {
+                selectElement.value = '/en/pt'; // Define o valor para o código de tradução (Inglês para Português)
+                // Dispara o evento 'change' para que o Google Translate aplique a tradução
+                selectElement.dispatchEvent(new Event('change'));
+            }
+        }
+    }
+    
+    // ATENÇÃO: Adiciona um atraso de 100ms (0.1 segundo) para evitar o flickering
+    window.onload = function() {
+        // Inicializa o widget primeiro (função do Google)
+        googleTranslateElementInit(); 
+        
+        // Espera um momento e então força a tradução
+        setTimeout(translateImmediately, 100); 
+    };
+</script>
+
+</body>
+</html> src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script type="text/javascript">
+    // Função de Callback exigida pela API do Google Translate
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement(
+            {
                 // Idioma da sua página (o clone da BBC é Inglês)
                 pageLanguage: 'en',
                 // Define o layout como um menu dropdown simples
